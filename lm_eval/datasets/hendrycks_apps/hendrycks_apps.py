@@ -105,13 +105,15 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
         ]
 
     def _generate_examples(self, basepath):
-        for problem_name in sorted(pathlib.Path(basepath).iterdir()):
-            problem_id = int(problem_name.name)
-            test_case_path = os.path.join(basepath, problem_name, "input_output.json")
-            meta_fname = os.path.join(basepath, problem_name, "metadata.json")
-            question_fname = os.path.join(basepath, problem_name, "question.txt")
-            sols_fname = os.path.join(basepath, problem_name, "solutions.json")
-            starter_code = os.path.join(basepath, problem_name, "starter_code.py")
+        split_name = pathlib.Path(basepath).name
+
+        for problem_path in sorted(pathlib.Path(basepath).iterdir()):
+            problem_id = split_name + "-" + problem_path.name
+            test_case_path = os.path.join(basepath, problem_path, "input_output.json")
+            meta_fname = os.path.join(basepath, problem_path, "metadata.json")
+            question_fname = os.path.join(basepath, problem_path, "question.txt")
+            sols_fname = os.path.join(basepath, problem_path, "solutions.json")
+            starter_code = os.path.join(basepath, problem_path, "starter_code.py")
 
             if os.path.exists(starter_code):
                 answer_type = "\nUse Call-Based format\n"
