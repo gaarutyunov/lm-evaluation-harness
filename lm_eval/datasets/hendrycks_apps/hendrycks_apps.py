@@ -106,6 +106,7 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
 
     def _generate_examples(self, basepath):
         for problem_name in sorted(pathlib.Path(basepath).iterdir()):
+            problem_id = int(problem_name.name)
             test_case_path = os.path.join(basepath, problem_name, "input_output.json")
             meta_fname = os.path.join(basepath, problem_name, "metadata.json")
             question_fname = os.path.join(basepath, problem_name, "question.txt")
@@ -140,7 +141,7 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                 sols_str_list = json.load(f)
                 for sol_str in sols_str_list:
                     sol_str = reindent_code(sol_str)
-                    yield problem_name, {
+                    yield problem_id, {
                         "question": question_str,
                         "solution": sol_str,
                         "starter_code": starter_code,
