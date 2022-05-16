@@ -20,7 +20,7 @@ import pathlib
 import datasets
 from datasets import DownloadManager, DatasetInfo
 
-from lm_eval.datasets.hendrycks_apps.reindent import reindent_code
+from .reindent import reindent_code
 
 _CITATION = """\
 @article{hendrycksapps2021,

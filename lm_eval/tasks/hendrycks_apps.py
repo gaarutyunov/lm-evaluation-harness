@@ -515,10 +515,10 @@ class APPS(Task):
 
     def process_results(self, doc, results):
         test_cases = run_test(doc['prob_path'], results[0])
-        test_cases = [False if x < 0 else x for x in test_cases]
+        test_cases = np.array([False if x < 0 else x for x in test_cases])
 
         return {
-            "strict_acc": 0,  # TODO: calculate strict acc
+            "strict_acc": np.all(test_cases),
             "avg_test_cases": 100 * np.mean(test_cases)
         }
 
