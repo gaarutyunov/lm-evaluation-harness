@@ -480,6 +480,7 @@ def call_method(method, inputs):
 
 
 class APPS(Task):
+    VERSION = 1
     DATASET_NAME = "apps"
     DATASET_PATH = inspect.getfile(lm_eval.datasets.hendrycks_apps.hendrycks_apps)
 
