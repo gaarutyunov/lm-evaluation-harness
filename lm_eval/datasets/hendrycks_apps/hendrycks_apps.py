@@ -56,7 +56,7 @@ _LEVELS = [
 class HendrycksAPPS(datasets.GeneratorBasedBuilder):
     """APPS is a dataset consisting of 10,000 coding problems"""
 
-    VERSION = datasets.Version("0.0.1")
+    VERSION = datasets.Version("0.0.2")
 
     BUILDER_CONFIGS = [
         datasets.BuilderConfig(name="apps", version=VERSION, description="APPS is a dataset consisting of 10,000 "
@@ -71,7 +71,7 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                 "starter_code": datasets.Value("string"),
                 "difficulty": datasets.Value("string"),
                 "type": datasets.Value("string"),
-                "prob_path": datasets.Value("string"),
+                "in_outs": datasets.Value("string"),
             }
         )
         return datasets.DatasetInfo(
@@ -117,7 +117,7 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
             else:
                 answer_type = "\nUse Standard Input format\n"
 
-            if (not os.path.isfile(question_fname)) or (not os.path.isfile(sols_fname)):
+            if (not os.path.isfile(question_fname)) or (not os.path.isfile(sols_fname)) or (not os.path.isfile(test_case_path)):
                 continue
 
             if os.path.isfile(starter_code):
@@ -129,6 +129,10 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
             # Read the question description
             with open(question_fname, 'r') as f:
                 question_str = f.read()
+
+            # Read the question description
+            with open(test_case_path, 'r') as f:
+                in_outs = f.read()
 
             # Read the question level
             with open(meta_fname, 'r') as f:
@@ -146,6 +150,6 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                         "starter_code": starter_code,
                         "type": answer_type,
                         "difficulty": difficulty,
-                        "prob_path": test_case_path
+                        "in_outs": in_outs
                     }
 

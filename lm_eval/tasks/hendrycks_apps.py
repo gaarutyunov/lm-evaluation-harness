@@ -15,11 +15,9 @@ import inspect
 import lm_eval.datasets.hendrycks_apps.hendrycks_apps
 from lm_eval.base import Task, rf
 from lm_eval.metrics import mean
-import argparse
 import json
 import os
 import sys
-import io
 import faulthandler
 
 # used for debugging to time steps
@@ -31,8 +29,6 @@ import signal
 import numpy as np
 # for capturing the stdout
 from io import StringIO
-from typing import get_type_hints
-from typing import List, Tuple
 # used for testing the code that reads from input
 from unittest.mock import patch, mock_open
 
@@ -78,7 +74,7 @@ class Capturing(list):
         sys.stdout = self._stdout
 
 
-def run_test(prob_path: str = None, test: str = None, debug: bool = False):
+def run_test(test: str = None, debug: bool = True, in_outs: str = None):
     """
     if test is not None it'll try to run the code.
     otherwise it'll just return an input and output pair.
@@ -86,20 +82,20 @@ def run_test(prob_path: str = None, test: str = None, debug: bool = False):
     if debug:
         print(f"start = {datetime.now().time()}")
 
-    root = prob_path
+    assert in_outs is not None, "input=>output must be passed"
 
-    if os.path.exists(os.path.join(root, "input_output.json")):
-        with open(os.path.join(root, "input_output.json")) as f:
-            in_outs = json.load(f)
-            if debug:
-                print(f"test cases json = {in_outs['inputs']} {in_outs['outputs']}")
+    in_outs = json.loads(in_outs)
 
-            if in_outs.get("fn_name") is None:
-                which_type = CODE_TYPE.standard_input  # Standard input
-                method_name = None
-            else:
-                which_type = CODE_TYPE.call_based  # Call-based
-                method_name = in_outs["fn_name"]
+    if debug:
+        print(f"test cases json = {in_outs['inputs']} {in_outs['outputs']}")
+
+    if in_outs.get("fn_name") is None:
+        which_type = CODE_TYPE.standard_input  # Standard input
+        method_name = None
+    else:
+        which_type = CODE_TYPE.call_based  # Call-based
+        method_name = in_outs["fn_name"]
+
     if debug:
         print(f"loaded json = {datetime.now().time()}")
 
@@ -506,20 +502,20 @@ class APPS(Task):
         return doc["question"]
 
     def doc_to_text(self, doc):
-        return f'QUESTION: {doc["question"]} {doc["starter_code"]} {doc["type"]}\n ANSWER:'
+        return f'Q:\n{doc["question"]}\n{doc["starter_code"]}\n{doc["type"]}\nA:\n'
 
     def doc_to_target(self, doc):
-        return f' {doc["solution"]}'
+        return doc["solution"]
 
     def construct_requests(self, doc, ctx):
-        return rf.greedy_until(ctx, ["\n"])
+        return rf.greedy_until(ctx, ["<|endoftext|>"])
 
     def process_results(self, doc, results):
-        test_cases = run_test(doc['prob_path'], results[0])
+        test_cases = run_test(test=results[0], in_outs=doc["in_outs"])
         test_cases = np.array([False if x < 0 else x for x in test_cases])
 
         return {
-            "strict_acc": np.all(test_cases),
+            "strict_acc": np.all(test_cases).astype(float),
             "avg_test_cases": 100 * np.mean(test_cases)
         }
 
