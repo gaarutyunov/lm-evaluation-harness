@@ -53,14 +53,15 @@ _LEVELS = [
 ]
 
 
-class HendrycksAPPS(datasets.GeneratorBasedBuilder):
+class HendrycksApps(datasets.GeneratorBasedBuilder):
     """APPS is a dataset consisting of 10,000 coding problems"""
 
-    VERSION = datasets.Version("0.0.2")
+    VERSION = datasets.Version("0.0.3")
 
     BUILDER_CONFIGS = [
-        datasets.BuilderConfig(name="apps", version=VERSION, description="APPS is a dataset consisting of 10,000 "
-                                                                         "coding problems")
+        datasets.BuilderConfig(name=level, version=version, description="APPS is a dataset consisting of 10,000 "
+                                                                        "coding problems")
+        for level, version in zip(_LEVELS, [VERSION] * len(_LEVELS))
     ]
 
     def _info(self) -> DatasetInfo:
@@ -69,7 +70,6 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                 "question": datasets.Value("string"),
                 "solution": datasets.Value("string"),
                 "starter_code": datasets.Value("string"),
-                "difficulty": datasets.Value("string"),
                 "type": datasets.Value("string"),
                 "in_outs": datasets.Value("string"),
             }
@@ -92,6 +92,8 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                     "basepath": os.path.join(
                         data_dir, "APPS", "train"
                     ),
+                    "split": "train",
+                    "level": self.config.name
                 },
             ),
             datasets.SplitGenerator(
@@ -100,11 +102,13 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
                     "basepath": os.path.join(
                         data_dir, "APPS", "test"
                     ),
+                    "split": "test",
+                    "level": self.config.name
                 },
             ),
         ]
 
-    def _generate_examples(self, basepath):
+    def _generate_examples(self, basepath, split, level):
         for problem_path in sorted(pathlib.Path(basepath).iterdir()):
             test_case_path = os.path.join(basepath, problem_path, "input_output.json")
             meta_fname = os.path.join(basepath, problem_path, "metadata.json")
@@ -112,12 +116,21 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
             sols_fname = os.path.join(basepath, problem_path, "solutions.json")
             starter_code = os.path.join(basepath, problem_path, "starter_code.py")
 
+            # Read the question level
+            with open(meta_fname, 'r') as f:
+                meta = json.load(f)
+                difficulty = meta["difficulty"]
+
+            if difficulty != level:  # only use problems with level from current config
+                continue
+
             if os.path.exists(starter_code):
                 answer_type = "\nUse Call-Based format\n"
             else:
                 answer_type = "\nUse Standard Input format\n"
 
-            if (not os.path.isfile(question_fname)) or (not os.path.isfile(sols_fname)) or (not os.path.isfile(test_case_path)):
+            if (not os.path.isfile(question_fname)) or (not os.path.isfile(sols_fname)) or (
+            not os.path.isfile(test_case_path)):
                 continue
 
             if os.path.isfile(starter_code):
@@ -130,26 +143,38 @@ class HendrycksAPPS(datasets.GeneratorBasedBuilder):
             with open(question_fname, 'r') as f:
                 question_str = f.read()
 
-            # Read the question description
+            # Read the test cases
             with open(test_case_path, 'r') as f:
                 in_outs = f.read()
 
-            # Read the question level
-            with open(meta_fname, 'r') as f:
-                difficulty_json = json.load(f)
-                difficulty = difficulty_json["difficulty"]
+            if split == "train":
+                # Read all the solutions
+                with open(sols_fname, 'r') as f:
+                    sols_str_list = json.load(f)
+                    for i, sol_str in enumerate(sols_str_list):
+                        sol_str = reindent_code(sol_str)
+                        yield problem_path.name + "-" + str(i), {
+                            "question": question_str,
+                            "solution": sol_str,
+                            "starter_code": starter_code,
+                            "type": answer_type,
+                            "in_outs": in_outs
+                        }
+            else:
+                # find shortest solution and use it to avoid duplications
+                with open(sols_fname, 'r') as f:
+                    sols_str_list = json.load(f)
+                    shortest_len = len(sols_str_list[0])
+                    shortest_sol = sols_str_list[0]
+                    for sol_str in sols_str_list[1:]:
+                        if (sol_len := len(sol_str)) < shortest_len:
+                            shortest_len = sol_len
+                            shortest_sol = sol_str
 
-            # Read all the solutions
-            with open(sols_fname, 'r') as f:
-                sols_str_list = json.load(f)
-                for i, sol_str in enumerate(sols_str_list):
-                    sol_str = reindent_code(sol_str)
-                    yield problem_path.name + "-" + str(i), {
+                    yield problem_path.name + "-0", {
                         "question": question_str,
-                        "solution": sol_str,
+                        "solution": shortest_sol,
                         "starter_code": starter_code,
                         "type": answer_type,
-                        "difficulty": difficulty,
                         "in_outs": in_outs
                     }
-

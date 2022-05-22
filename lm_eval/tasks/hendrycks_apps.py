@@ -16,7 +16,6 @@ import lm_eval.datasets.hendrycks_apps.hendrycks_apps
 from lm_eval.base import Task, rf
 from lm_eval.metrics import mean
 import json
-import os
 import sys
 import faulthandler
 
@@ -79,10 +78,11 @@ def run_test(test: str = None, debug: bool = True, in_outs: str = None):
     if test is not None it'll try to run the code.
     otherwise it'll just return an input and output pair.
     """
+    if test is None or in_outs is None:
+        return [0]
+
     if debug:
         print(f"start = {datetime.now().time()}")
-
-    assert in_outs is not None, "input=>output must be passed"
 
     in_outs = json.loads(in_outs)
 
@@ -187,17 +187,17 @@ def run_test(test: str = None, debug: bool = True, in_outs: str = None):
                 if isinstance(inputs[0], dict):
                     inputs = [{int(k): v for k, v in inputs[0].items()}]
             except:
-                True
+                pass
             try:
                 if isinstance(in_outs["outputs"][index], dict):
                     in_outs["outputs"][index] = [{int(k): v for k, v in in_outs["outputs"][index].items()}]
             except:
-                True
+                pass
             try:
                 if isinstance(in_outs["outputs"][index][0], dict):
                     in_outs["outputs"][index] = [{int(k): v for k, v in in_outs["outputs"][index][0].items()}]
             except:
-                True
+                pass
 
             if debug:
                 print(
@@ -475,9 +475,8 @@ def call_method(method, inputs):
     return _inner_call_method(method)
 
 
-class APPS(Task):
-    VERSION = 1
-    DATASET_NAME = "apps"
+class Apps(Task):
+    DATASET_NAME = None
     DATASET_PATH = inspect.getfile(lm_eval.datasets.hendrycks_apps.hendrycks_apps)
 
     def has_training_docs(self):
@@ -493,7 +492,7 @@ class APPS(Task):
         return self.dataset["train"]
 
     def validation_docs(self):
-        raise NotImplementedError
+        return NotImplemented
 
     def test_docs(self):
         return self.dataset["test"]
@@ -530,3 +529,18 @@ class APPS(Task):
             "strict_acc": True,
             "avg_test_cases": True
         }
+
+
+class AppsIntroductory(Apps):
+    VERSION = 1
+    DATASET_NAME = "introductory"
+
+
+class AppsInterview(Apps):
+    VERSION = 1
+    DATASET_NAME = "interview"
+
+
+class AppsCompetition(Apps):
+    VERSION = 1
+    DATASET_NAME = "competition"

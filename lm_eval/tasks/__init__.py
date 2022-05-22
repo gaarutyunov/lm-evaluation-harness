@@ -4,7 +4,7 @@ from typing import List, Union
 import sacrebleu
 import lm_eval.base
 
-from . import superglue, hendrycks_apps
+from . import superglue
 from . import glue
 from . import arc
 from . import coqa
@@ -38,6 +38,7 @@ from . import drop
 from . import unscramble
 from . import logiqa
 from . import hendrycks_test
+from . import hendrycks_apps
 from . import hendrycks_math
 from . import cbt
 from . import lambada_cloze
@@ -153,6 +154,10 @@ TASK_REGISTRY = {
     # dialogue
     "mutual": mutual.MuTual,
     "mutual_plus": mutual.MuTualPlus,
+    # apps
+    "apps_introductory": hendrycks_apps.AppsIntroductory,
+    "apps_interview": hendrycks_apps.AppsInterview,
+    "apps_competition": hendrycks_apps.AppsCompetition,
     # math
     "math_algebra": hendrycks_math.MathAlgebra,
     "math_counting_and_prob": hendrycks_math.MathCountingAndProbability,
@@ -163,8 +168,6 @@ TASK_REGISTRY = {
     "math_precalc": hendrycks_math.MathPrecalculus,
     "math_asdiv": asdiv.Asdiv,
     "gsm8k": gsm8k.GradeSchoolMath8K,
-    # apps
-    "apps": hendrycks_apps.APPS,
     # arithmetic
     "arithmetic_2da": arithmetic.Arithmetic2DPlus,
     "arithmetic_2ds": arithmetic.Arithmetic2DMinus,
