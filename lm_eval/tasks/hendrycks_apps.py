@@ -204,7 +204,7 @@ def run_test(test: str = None, debug: bool = True, in_outs: str = None):
                     f"time: {datetime.now().time()} testing index = {index}  inputs = {inputs}, {type(inputs)}. type = {which_type}")
             if which_type == CODE_TYPE.call_based:  # Call-based
                 signal.alarm(timeout)
-                faulthandler.enable()
+                faulthandler.enable(file=sys.stderr)
                 try:
                     # print("------------")
                     # print(inputs)
@@ -223,7 +223,7 @@ def run_test(test: str = None, debug: bool = True, in_outs: str = None):
                         if isinstance(output[0], tuple):
                             tmp_result = tmp_result or ([list(x) for x in output] == in_outs["outputs"][index][0])
                     except:
-                        True
+                        pass
                     results.append(tmp_result)
 
                     # reset the alarm
@@ -240,7 +240,7 @@ def run_test(test: str = None, debug: bool = True, in_outs: str = None):
                     print(
                         f"outputs = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
             elif which_type == CODE_TYPE.standard_input:  # Standard input
-                faulthandler.enable()
+                faulthandler.enable(file=sys.stderr)
                 signal.alarm(timeout)
                 passed = False
 
