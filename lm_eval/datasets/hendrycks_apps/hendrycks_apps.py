@@ -56,7 +56,7 @@ _LEVELS = [
 class HendrycksApps(datasets.GeneratorBasedBuilder):
     """APPS is a dataset consisting of 10,000 coding problems"""
 
-    VERSION = datasets.Version("0.0.3")
+    VERSION = datasets.Version("0.0.1")
 
     BUILDER_CONFIGS = [
         datasets.BuilderConfig(name=level, version=version, description="APPS is a dataset consisting of 10,000 "
