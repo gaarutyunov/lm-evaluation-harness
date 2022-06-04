@@ -1,4 +1,6 @@
+import ast
 import io
+from typing import Optional
 
 
 def reindent_code(codestr):
@@ -12,7 +14,7 @@ def reindent_code(codestr):
     run(
         codestr,
         ret,
-        config = {
+        config={
             "dry-run": False,
             "help": False,
             "to": 4,
@@ -21,8 +23,8 @@ def reindent_code(codestr):
             "encoding": "utf-8",
             "is-tabs": False,
             "tabsize": 4,
-            "all-tabs": False
-        }
+            "all-tabs": False,
+        },
     )
 
     return ret.getvalue()
@@ -31,7 +33,7 @@ def reindent_code(codestr):
 def _find_indentation(line, config):
     if len(line) and line[0] in (" ", "\t") and not line.isspace():
         if line[0] == "\t":
-            config['is-tabs'] = True
+            config["is-tabs"] = True
         # Find indentation
         i = 0
         for char in list(line):
@@ -43,18 +45,18 @@ def _find_indentation(line, config):
 
 def find_indentation(line, config):
     # Find indentation level used in file
-    if config['from'] < 0:
+    if config["from"] < 0:
         _find_indentation(line, config)
 
-    if config['from'] >= 0:
+    if config["from"] >= 0:
         # Set old indent
-        indent = " " if not config['is-tabs'] else "\t"
-        indent = indent * config['from']
+        indent = " " if not config["is-tabs"] else "\t"
+        indent = indent * config["from"]
 
         # Set new indent
-        newindent = " " if not config['tabs'] else "\t"
-        if not config['tabs']:
-            newindent = newindent * config['to']
+        newindent = " " if not config["tabs"] else "\t"
+        if not config["tabs"]:
+            newindent = newindent * config["to"]
 
         return indent, newindent
 
@@ -67,8 +69,8 @@ def replace_inline_tabs(content, config):
     imagined_i = 0
     for i in range(0, len(content)):
         char = content[i]
-        if char == '\t':
-            spaces = config['tabsize']-(imagined_i % config['tabsize'])
+        if char == "\t":
+            spaces = config["tabsize"] - (imagined_i % config["tabsize"])
             newcontent += " " * spaces
             imagined_i += spaces
         else:
@@ -82,10 +84,10 @@ def run(fd_in, fd_out, config):
         line = fd_in.readline()
         if not line:
             break
-        line = line.rstrip('\r\n')
+        line = line.rstrip("\r\n")
 
         # Find indentation style used in file if not set
-        if config['from'] < 0:
+        if config["from"] < 0:
             indent = find_indentation(line, config)
             if not indent:
                 print(line, file=fd_out)
@@ -95,15 +97,36 @@ def run(fd_in, fd_out, config):
         # Find current indentation level
         level = 0
         while True:
-            whitespace = line[:len(indent) * (level + 1)]
+            whitespace = line[: len(indent) * (level + 1)]
             if whitespace == indent * (level + 1):
                 level += 1
             else:
                 break
 
-        content = line[len(indent) * level:]
-        if config['all-tabs']:
+        content = line[len(indent) * level :]
+        if config["all-tabs"]:
             content = replace_inline_tabs(content, config)
 
         line = (newindent * level) + content
         print(line, file=fd_out)
+
+
+def extract_func_signature_and_body(code: str) -> tuple[Optional[str], Optional[str]]:
+    nodes = ast.parse(code)
+    sig, body = None, None
+
+    for node in ast.walk(nodes):
+        if isinstance(node, ast.FunctionDef):
+            sig = "def "
+
+            sig += node.name + "("
+
+            for arg in node.args.args:
+                sig += arg.arg + ", "
+
+            sig = sig.rstrip(", ") + ")"
+
+            body = ast.unparse(node.body)
+            break
+
+    return sig, body

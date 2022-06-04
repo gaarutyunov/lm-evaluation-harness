@@ -20,7 +20,7 @@ import pathlib
 import datasets
 from datasets import DownloadManager, DatasetInfo
 
-from .reindent import reindent_code
+from lm_eval.code_utils import reindent_code
 
 _CITATION = """\
 @article{hendrycksapps2021,
@@ -46,11 +46,7 @@ _URLS = "https://people.eecs.berkeley.edu/~hendrycks/APPS.tar.gz"
 
 _LICENSE = "MIT License"
 
-_LEVELS = [
-    "introductory",
-    "interview",
-    "competition"
-]
+_LEVELS = ["introductory", "interview", "competition"]
 
 
 class HendrycksApps(datasets.GeneratorBasedBuilder):
@@ -59,8 +55,11 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
     VERSION = datasets.Version("0.0.1")
 
     BUILDER_CONFIGS = [
-        datasets.BuilderConfig(name=level, version=version, description="APPS is a dataset consisting of 10,000 "
-                                                                        "coding problems")
+        datasets.BuilderConfig(
+            name=level,
+            version=version,
+            description="APPS is a dataset consisting of 10,000 " "coding problems",
+        )
         for level, version in zip(_LEVELS, [VERSION] * len(_LEVELS))
     ]
 
@@ -89,21 +88,17 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "basepath": os.path.join(
-                        data_dir, "APPS", "train"
-                    ),
+                    "basepath": os.path.join(data_dir, "APPS", "train"),
                     "split": "train",
-                    "level": self.config.name
+                    "level": self.config.name,
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
                 gen_kwargs={
-                    "basepath": os.path.join(
-                        data_dir, "APPS", "test"
-                    ),
+                    "basepath": os.path.join(data_dir, "APPS", "test"),
                     "split": "test",
-                    "level": self.config.name
+                    "level": self.config.name,
                 },
             ),
         ]
@@ -117,7 +112,7 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
             starter_code = os.path.join(basepath, problem_path, "starter_code.py")
 
             # Read the question level
-            with open(meta_fname, 'r') as f:
+            with open(meta_fname, "r") as f:
                 meta = json.load(f)
                 difficulty = meta["difficulty"]
 
@@ -129,27 +124,30 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
             else:
                 answer_type = "\nUse Standard Input format\n"
 
-            if (not os.path.isfile(question_fname)) or (not os.path.isfile(sols_fname)) or (
-            not os.path.isfile(test_case_path)):
+            if (
+                (not os.path.isfile(question_fname))
+                or (not os.path.isfile(sols_fname))
+                or (not os.path.isfile(test_case_path))
+            ):
                 continue
 
             if os.path.isfile(starter_code):
-                with open(starter_code, 'r') as f:
+                with open(starter_code, "r") as f:
                     starter_code = f.read()
             else:
                 starter_code = ""
 
             # Read the question description
-            with open(question_fname, 'r') as f:
+            with open(question_fname, "r") as f:
                 question_str = f.read()
 
             # Read the test cases
-            with open(test_case_path, 'r') as f:
+            with open(test_case_path, "r") as f:
                 in_outs = f.read()
 
             if split == "train":
                 # Read all the solutions
-                with open(sols_fname, 'r') as f:
+                with open(sols_fname, "r") as f:
                     sols_str_list = json.load(f)
                     for i, sol_str in enumerate(sols_str_list):
                         sol_str = reindent_code(sol_str)
@@ -158,11 +156,11 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
                             "solution": sol_str,
                             "starter_code": starter_code,
                             "type": answer_type,
-                            "in_outs": in_outs
+                            "in_outs": in_outs,
                         }
             else:
                 # find shortest solution and use it to avoid duplications
-                with open(sols_fname, 'r') as f:
+                with open(sols_fname, "r") as f:
                     sols_str_list = json.load(f)
                     shortest_len = len(sols_str_list[0])
                     shortest_sol = sols_str_list[0]
@@ -176,5 +174,5 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
                         "solution": shortest_sol,
                         "starter_code": starter_code,
                         "type": answer_type,
-                        "in_outs": in_outs
+                        "in_outs": in_outs,
                     }

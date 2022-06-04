@@ -499,7 +499,7 @@ class Apps(Task):
         return doc["question"]
 
     def doc_to_text(self, doc):
-        return f'Q:\n{doc["question"]}\n{doc["starter_code"]}\n{doc["type"]}\nA:\n'
+        return f'QUESTION:\n{doc["question"]}\n{doc["starter_code"]}\n{doc["type"]}\nANSWER:\n'
 
     def doc_to_target(self, doc):
         return doc["solution"]
