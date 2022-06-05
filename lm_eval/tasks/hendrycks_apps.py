@@ -29,8 +29,10 @@ from datetime import datetime
 import signal
 
 import numpy as np
+
 # for capturing the stdout
 from io import StringIO
+
 # used for testing the code that reads from input
 from unittest.mock import patch, mock_open
 
@@ -46,7 +48,7 @@ class TimeoutException(Exception):
 
 def timeout_handler(signum, frame):
     print("alarm went off")
-    #return
+    # return
     raise TimeoutException
 
 
@@ -72,7 +74,7 @@ class Capturing(list):
 
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio    # free up some memory
+        del self._stringio  # free up some memory
         sys.stdout = self._stdout
 
 
@@ -188,21 +190,31 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
             pass
         try:
             if isinstance(in_outs["outputs"][index], dict):
-                in_outs["outputs"][index] = [{int(k): v for k, v in in_outs["outputs"][index].items()}]
+                in_outs["outputs"][index] = [
+                    {int(k): v for k, v in in_outs["outputs"][index].items()}
+                ]
         except:
             pass
         try:
             if isinstance(in_outs["outputs"][index][0], dict):
-                in_outs["outputs"][index] = [{int(k): v for k, v in in_outs["outputs"][index][0].items()}]
+                in_outs["outputs"][index] = [
+                    {int(k): v for k, v in in_outs["outputs"][index][0].items()}
+                ]
         except:
             pass
 
         if debug:
             print(
-                f"time: {datetime.now().time()} testing index = {index}  inputs = {inputs}, {type(inputs)}. type = {which_type}")
+                f"time: {datetime.now().time()} testing index = {index}  inputs = {inputs}, {type(inputs)}. type = {which_type}"
+            )
         if which_type == CODE_TYPE.call_based:  # Call-based
             signal.alarm(timeout)
-            faulthandler.enable(file=open(os.path.join(os.getcwd(), 'log.txt')))
+            faulthandler.enable(
+                file=open(
+                    os.path.join(os.path.expanduser("~/code/gpt-neox"), "log.txt"),
+                    mode="a",
+                )
+            )
             try:
                 # print("------------")
                 # print(inputs)
@@ -213,13 +225,18 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                     output = list(output)
 
                 tmp_result = output == in_outs["outputs"][index]
-                if isinstance(in_outs["outputs"][index], list) and in_outs["outputs"][index]:
+                if (
+                    isinstance(in_outs["outputs"][index], list)
+                    and in_outs["outputs"][index]
+                ):
                     tmp_result = tmp_result or (output == in_outs["outputs"][index][0])
 
                 # ground truth sequences are not tuples
                 try:
                     if isinstance(output[0], tuple):
-                        tmp_result = tmp_result or ([list(x) for x in output] == in_outs["outputs"][index][0])
+                        tmp_result = tmp_result or (
+                            [list(x) for x in output] == in_outs["outputs"][index][0]
+                        )
                 except:
                     pass
                 results.append(tmp_result)
@@ -229,23 +246,31 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
             except Exception as e:
                 signal.alarm(0)
                 faulthandler.disable()
-                print(f"Standard input runtime error or time limit exceeded error = {e}")
+                print(
+                    f"Standard input runtime error or time limit exceeded error = {e}"
+                )
                 results.append(-1)
                 continue
             faulthandler.disable()
             signal.alarm(0)
             if debug:
                 print(
-                    f"outputs = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                    f"outputs = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                )
         elif which_type == CODE_TYPE.standard_input:  # Standard input
-            faulthandler.enable(file=open(os.path.join(os.getcwd(), 'log.txt')))
+            faulthandler.enable(
+                file=open(
+                    os.path.join(os.path.expanduser("~/code/gpt-neox"), "log.txt"),
+                    mode="a",
+                )
+            )
             signal.alarm(timeout)
             passed = False
 
             if isinstance(inputs, list):
                 inputs = "\n".join(inputs)
-            if isinstance(in_outs['outputs'][index], list):
-                in_outs['outputs'][index] = "\n".join(in_outs['outputs'][index])
+            if isinstance(in_outs["outputs"][index], list):
+                in_outs["outputs"][index] = "\n".join(in_outs["outputs"][index])
 
             with Capturing() as output:
                 try:
@@ -256,7 +281,9 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                 except Exception as e:
                     # runtime error or took too long
                     signal.alarm(0)
-                    print(f"Call-based runtime error or time limit exceeded error = {repr(e)}{e}")
+                    print(
+                        f"Call-based runtime error or time limit exceeded error = {repr(e)}{e}"
+                    )
                     results.append(-1)
                 signal.alarm(0)
 
@@ -265,16 +292,20 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                     nl = "\n"
                     if not isinstance(inputs, list):
                         print(
-                            f"not passed output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                            f"not passed output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                        )
                     else:
                         print(
-                            f"not passed output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                            f"not passed output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                        )
                 continue
 
             if passed and debug:
-                print(f"==> output = {output}, test outputs = {in_outs['outputs'][index]}")
+                print(
+                    f"==> output = {output}, test outputs = {in_outs['outputs'][index]}"
+                )
 
-            if custom_compare_(output, in_outs['outputs'][index]):
+            if custom_compare_(output, in_outs["outputs"][index]):
                 tmp_result = True
                 results.append(tmp_result)
                 continue
@@ -285,11 +316,13 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
 
             tmp_result = False
             try:
-                tmp_result = (output == [in_outs["outputs"][index]])
+                tmp_result = output == [in_outs["outputs"][index]]
                 if isinstance(in_outs["outputs"][index], list):
                     tmp_result = tmp_result or (output == in_outs["outputs"][index])
                     if isinstance(output[0], str):
-                        tmp_result = tmp_result or ([e.strip() for e in output] == in_outs["outputs"][index])
+                        tmp_result = tmp_result or (
+                            [e.strip() for e in output] == in_outs["outputs"][index]
+                        )
             except Exception as e:
                 print(f"Failed check1 exception = {e}")
                 pass
@@ -302,15 +335,18 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
             if isinstance(in_outs["outputs"][index], list):
                 for tmp_index, i in enumerate(in_outs["outputs"][index]):
                     in_outs["outputs"][index][tmp_index] = i.split("\n")
-                    in_outs["outputs"][index][tmp_index] = [x.strip() for x in in_outs["outputs"][index][tmp_index]
-                                                            if x]
+                    in_outs["outputs"][index][tmp_index] = [
+                        x.strip() for x in in_outs["outputs"][index][tmp_index] if x
+                    ]
             else:
                 in_outs["outputs"][index] = in_outs["outputs"][index].split("\n")
                 in_outs["outputs"][index] = list(filter(len, in_outs["outputs"][index]))
-                in_outs["outputs"][index] = list(map(lambda x: x.strip(), in_outs["outputs"][index]))
+                in_outs["outputs"][index] = list(
+                    map(lambda x: x.strip(), in_outs["outputs"][index])
+                )
 
             try:
-                tmp_result = (output == [in_outs["outputs"][index]])
+                tmp_result = output == [in_outs["outputs"][index]]
                 if isinstance(in_outs["outputs"][index], list):
                     tmp_result = tmp_result or (output == in_outs["outputs"][index])
             except Exception as e:
@@ -329,17 +365,19 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                 nl = "\n"
                 if not isinstance(inputs, list):
                     print(
-                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                    )
                 else:
                     print(
-                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                    )
 
             if tmp_result:
                 results.append(tmp_result)
                 continue
 
             try:
-                tmp_result = (output == [in_outs["outputs"][index]])
+                tmp_result = output == [in_outs["outputs"][index]]
                 if isinstance(in_outs["outputs"][index], list):
                     tmp_result = tmp_result or (output == in_outs["outputs"][index])
             except Exception as e:
@@ -348,17 +386,21 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
 
             try:
                 output_float = [float(e) for e in output]
-                gt_float = [float(e) for e in in_outs['outputs'][index]]
+                gt_float = [float(e) for e in in_outs["outputs"][index]]
                 tmp_result = tmp_result or (
-                        (len(output_float) == len(gt_float)) and np.allclose(output_float, gt_float))
+                    (len(output_float) == len(gt_float))
+                    and np.allclose(output_float, gt_float)
+                )
             except Exception as e:
                 pass
             try:
                 if isinstance(output[0], list):
                     output_float = [float(e) for e in output[0]]
-                    gt_float = [float(e) for e in in_outs['outputs'][index][0]]
+                    gt_float = [float(e) for e in in_outs["outputs"][index][0]]
                     tmp_result = tmp_result or (
-                            (len(output_float) == len(gt_float)) and np.allclose(output_float, gt_float))
+                        (len(output_float) == len(gt_float))
+                        and np.allclose(output_float, gt_float)
+                    )
             except Exception as e:
                 pass
 
@@ -374,7 +416,7 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                 in_outs["outputs"][index] = set(in_outs["outputs"][index].split())
 
             try:
-                tmp_result = (output == in_outs["outputs"][index])
+                tmp_result = output == in_outs["outputs"][index]
             except Exception as e:
                 print(f"Failed check4 exception = {e}")
                 continue
@@ -396,16 +438,21 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                 output = set(output)
 
             try:
-                tmp_result = (set(frozenset(s) for s in output) == set(
-                    frozenset(s) for s in in_outs["outputs"][index]))
+                tmp_result = set(frozenset(s) for s in output) == set(
+                    frozenset(s) for s in in_outs["outputs"][index]
+                )
             except Exception as e:
                 print(f"Failed check5 exception = {e}")
 
             # if they are all numbers, round so that similar numbers are treated as identical
             try:
-                tmp_result = tmp_result or (set(frozenset(round(float(t), 3) for t in s) for s in output) == \
-                                            set(frozenset(round(float(t), 3) for t in s) for s in
-                                                in_outs["outputs"][index]))
+                tmp_result = tmp_result or (
+                    set(frozenset(round(float(t), 3) for t in s) for s in output)
+                    == set(
+                        frozenset(round(float(t), 3) for t in s)
+                        for s in in_outs["outputs"][index]
+                    )
+                )
             except Exception as e:
                 print(f"Failed check6 exception = {e}")
 
@@ -418,10 +465,12 @@ def run_test(test: str = None, debug: bool = False, in_outs: str = None):
                 nl = "\n"
                 if not isinstance(inputs, list):
                     print(
-                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs.replace(nl, ' new-line ')}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                    )
                 else:
                     print(
-                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}")
+                        f"output = {output}, test outputs = {in_outs['outputs'][index]}, inputs = {inputs}, {type(inputs)}, {output == [in_outs['outputs'][index]]}"
+                    )
 
     return results
 
@@ -456,11 +505,11 @@ def call_method(method, inputs):
     # sys.setrecursionlimit(10000)
 
     # @patch('builtins.input', side_effect=inputs.split("\n"))
-    @patch('builtins.open', mock_open(read_data=inputs))
-    @patch('sys.stdin', StringIO(inputs))
-    @patch('sys.stdin.readline', lambda *args: next(inputs_line_iterator))
-    @patch('sys.stdin.readlines', lambda *args: inputs.split("\n"))
-    @patch('sys.stdin.read', lambda *args: inputs)
+    @patch("builtins.open", mock_open(read_data=inputs))
+    @patch("sys.stdin", StringIO(inputs))
+    @patch("sys.stdin.readline", lambda *args: next(inputs_line_iterator))
+    @patch("sys.stdin.readlines", lambda *args: inputs.split("\n"))
+    @patch("sys.stdin.read", lambda *args: inputs)
     # @patch('sys.stdout.write', print)
     def _inner_call_method(_method):
         try:
@@ -508,33 +557,38 @@ class Apps(Task):
         return rf.greedy_until(ctx, ["<|endoftext|>"])
 
     def process_results(self, doc, results):
-        try:
-            test_cases = run_test(test=results[0], in_outs=doc["in_outs"])
-            cp = {**doc, 'generated': results[0]}
-            with open(os.getcwd().join('results.json'), 'a') as f:
-                json.dump(cp, f)
-        except Exception as e:
-            print('Error evaluating solution for %s' % doc['question'])
-            pprint.pprint(e)
+        test_cases = run_test(test=results[0], in_outs=doc["in_outs"])
+        if len(test_cases) == 0:
             test_cases = [False]
 
-        test_cases = np.array([False if x < 0 else x for x in test_cases]).astype(float)
+        test_cases = np.array(test_cases)
+
+        syntax_errors_rate = len(test_cases[test_cases == -2]) / len(test_cases)
+        runtime_errors_rate = len(test_cases[test_cases == -1]) / len(test_cases)
+
+        test_cases = test_cases > 0
 
         return {
             "strict_acc": np.all(test_cases).astype(float),
-            "avg_test_cases": np.mean(test_cases).astype(float)
+            "avg_test_cases": np.mean(test_cases).astype(float),
+            "syntax_errors_rate": syntax_errors_rate,
+            "runtime_errors_rate": runtime_errors_rate,
         }
 
     def aggregation(self):
         return {
             "strict_acc": mean,
-            "avg_test_cases": mean
+            "avg_test_cases": mean,
+            "syntax_errors_rate": mean,
+            "runtime_errors_rate": mean,
         }
 
     def higher_is_better(self):
         return {
             "strict_acc": True,
-            "avg_test_cases": True
+            "avg_test_cases": True,
+            "syntax_errors_rate": False,
+            "runtime_errors_rate": False,
         }
 
 
