@@ -54,7 +54,7 @@ class CoNaLa(datasets.GeneratorBasedBuilder):
                 except:
                     continue
 
-                yield question_id, {
+                yield str(question_id), {
                     'question': line['intent'],
                     'answer': code
                 }

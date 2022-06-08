@@ -144,7 +144,7 @@ class CodeDocstring(datasets.GeneratorBasedBuilder):
                 except Exception as e:
                     continue
 
-                yield i, {
+                yield str(i), {
                     "body": reindented,
                     "docstring": docstring,
                     "declaration": declaration,
