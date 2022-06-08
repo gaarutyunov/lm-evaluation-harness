@@ -13,6 +13,7 @@
 # limitations under the License.
 """StaQC dataset."""
 from io import StringIO
+from lib2to3.refactor import RefactoringTool, get_fixers_from_package
 
 import datasets
 import numpy as np
@@ -60,6 +61,7 @@ _NAMES = [
 
 class StaQC(datasets.GeneratorBasedBuilder):
     """StaQC: a systematically mined dataset containing around 148K Python and 120K SQL domain question-code pairs"""
+    refactor = RefactoringTool(fixer_names=get_fixers_from_package("lib2to3.fixes"))
 
     VERSION = datasets.Version("0.0.1")
 
@@ -83,10 +85,15 @@ class StaQC(datasets.GeneratorBasedBuilder):
     ):
         for question_id, code_idx in question_code_pairs.items():
             code = multi_code_snippet[(question_id, code_idx)]
+            code = code.strip("\n").strip(' ')
             question = multi_code_questions[question_id]
 
-            code, _ = repair_program_io(code)
-            code = reindent_code(code)
+            try:
+                code = self.refactor.refactor_string(code + '\n', str(question_id))
+            except Exception as e:
+                continue
+
+            code = reindent_code(str(code))
 
             yield question_id, {"question": question, "answer": code}
 
@@ -95,8 +102,14 @@ class StaQC(datasets.GeneratorBasedBuilder):
             single_code_questions.values(),
             single_code_snippet.values(),
         ):
-            code, _ = repair_program_io(code)
-            code = reindent_code(code)
+            code = code.strip("\n").strip()
+
+            try:
+                code = self.refactor.refactor_string(code + '\n', str(question_id))
+            except Exception as e:
+                continue
+
+            code = reindent_code(str(code))
 
             yield question_id, {"question": question, "answer": code}
 

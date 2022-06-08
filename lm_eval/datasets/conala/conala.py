@@ -1,8 +1,11 @@
 import os.path
+from lib2to3.refactor import RefactoringTool, get_fixers_from_package
 
 import datasets
 import jsonlines
 from datasets import DownloadManager, DatasetInfo
+
+from lm_eval.code_utils import repair_program_io, reindent_code
 
 _DESCRIPTION = """\
 CMU CoNaLa is a dataset crawled from Stack Overflow, automatically filtered, then curated by 
@@ -32,12 +35,28 @@ _URL = "https://www.phontron.com/download/conala-corpus-v1.1.zip"
 
 
 class CoNaLa(datasets.GeneratorBasedBuilder):
+    """Dataset for CoNaLa: Code/Natural Language Challenge"""
+    refactor = RefactoringTool(fixer_names=get_fixers_from_package("lib2to3.fixes"))
+
+    VERSION = datasets.Version("0.0.1")
+
     def _generate_examples(self, basepath):
         with jsonlines.open(os.path.join(basepath, 'conala-corpus', 'conala-mined.jsonl')) as reader:
             for line in reader.iter():
-                yield line['question_id'], {
+                question_id = line['question_id']
+                try:
+                    code = line['snippet'].strip("\n")
+                    if code.startswith('"') and code.endswith('"'):
+                        code = code.strip('"')
+                    code = code.strip(' ')
+                    code = self.refactor.refactor_string(code + '\n', str(question_id))
+                    code = reindent_code(str(code))
+                except:
+                    continue
+
+                yield question_id, {
                     'question': line['intent'],
-                    'answer': line['snippet']
+                    'answer': code
                 }
 
     def _info(self) -> DatasetInfo:
