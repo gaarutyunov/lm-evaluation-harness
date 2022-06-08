@@ -58,7 +58,7 @@ class HendrycksApps(datasets.GeneratorBasedBuilder):
         datasets.BuilderConfig(
             name=level,
             version=version,
-            description="APPS is a dataset consisting of 10,000 " "coding problems",
+            description="APPS is a dataset consisting of 10,000 coding problems",
         )
         for level, version in zip(_LEVELS, [VERSION] * len(_LEVELS))
     ]
