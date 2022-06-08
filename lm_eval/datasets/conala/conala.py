@@ -41,9 +41,12 @@ class CoNaLa(datasets.GeneratorBasedBuilder):
     VERSION = datasets.Version("0.0.1")
 
     def _generate_examples(self, basepath):
+        questions = []
         with jsonlines.open(os.path.join(basepath, 'conala-corpus', 'conala-mined.jsonl')) as reader:
             for line in reader.iter():
                 question_id = line['question_id']
+                if question_id in questions:
+                    continue
                 try:
                     code = line['snippet'].strip("\n")
                     if code.startswith('"') and code.endswith('"'):
@@ -58,6 +61,8 @@ class CoNaLa(datasets.GeneratorBasedBuilder):
                     'question': line['intent'],
                     'answer': code
                 }
+
+                questions.append(question_id)
 
     def _info(self) -> DatasetInfo:
         features = datasets.Features(
