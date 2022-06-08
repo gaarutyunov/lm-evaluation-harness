@@ -10,14 +10,14 @@ Homepage: https://github.com/LittleYUYU/StackOverflow-Question-Code-Dataset
 """
 import inspect
 
-import lm_eval.datasets.staqc.staqc
+import lm_eval.datasets.conala.conala
 from lm_eval.base import Task, rf
 from lm_eval.metrics import bleu
 
 
-class StaQC(Task):
+class CoNaLa(Task):
     DATASET_NAME = None
-    DATASET_PATH = inspect.getfile(lm_eval.datasets.staqc.staqc)
+    DATASET_PATH = inspect.getfile(lm_eval.datasets.conala.conala)
 
     def has_training_docs(self):
         return True
@@ -63,13 +63,3 @@ class StaQC(Task):
         return {
             "bleu": True,
         }
-
-
-class StaQCPython(StaQC):
-    VERSION = 1
-    DATASET_NAME = "python"
-
-
-class StaQCSql(StaQC):
-    VERSION = 1
-    DATASET_NAME = "sql"
