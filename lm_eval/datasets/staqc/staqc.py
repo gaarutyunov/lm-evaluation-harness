@@ -95,7 +95,7 @@ class StaQC(datasets.GeneratorBasedBuilder):
 
             code = reindent_code(str(code))
 
-            yield question_id, {"question": question, "answer": code}
+            yield str(question_id), {"question": question, "answer": code}
 
         for question_id, question, code in zip(
             single_code_questions.keys(),
@@ -111,7 +111,7 @@ class StaQC(datasets.GeneratorBasedBuilder):
 
             code = reindent_code(str(code))
 
-            yield question_id, {"question": question, "answer": code}
+            yield str(question_id), {"question": question, "answer": code}
 
     def _info(self) -> DatasetInfo:
         features = datasets.Features(
