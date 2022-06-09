@@ -51,7 +51,7 @@ class StaQC(Task):
 
     def process_results(self, doc, results):
         return {
-            "bleu": (doc['answer'], results[0]),
+            "bleu": (doc["answer"], results[0]),
         }
 
     def aggregation(self):

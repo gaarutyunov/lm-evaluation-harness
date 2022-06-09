@@ -1,23 +1,22 @@
 """
-StaQC: A Systematically Mined Question-Code Dataset from Stack Overflow
-http://web.cse.ohio-state.edu/~sun.397/docs/StaQC-www18.pdf
+Project codenet: a large-scale AI for code dataset for learning a diversity of coding tasks
+https://arxiv.org/pdf/2105.12655.pdf
 
-StaQC (Stack Overflow Question-Code pairs) is the largest dataset to date of around 148K Python and 120K SQL domain
-question-code pairs, which are automatically mined from Stack Overflow using a Bi-View Hierarchical Neural Network,
-as described in the paper "StaQC: A Systematically Mined Question-Code Dataset from Stack Overflow" (WWW'18).
+CodeNet consists of over 14 million code samples and about 500 million lines of code in 55
+different programming languages, which is aimed at teaching AI to code.
 
-Homepage: https://github.com/LittleYUYU/StackOverflow-Question-Code-Dataset
+Homepage: https://github.com/IBM/Project_CodeNet
 """
 import inspect
 
-import lm_eval.datasets.conala.conala
+import lm_eval.datasets.codenet.codenet
 from lm_eval.base import Task, rf
 from lm_eval.metrics import bleu
 
 
-class CoNaLa(Task):
+class CodeNet(Task):
     DATASET_NAME = None
-    DATASET_PATH = inspect.getfile(lm_eval.datasets.conala.conala)
+    DATASET_PATH = inspect.getfile(lm_eval.datasets.codenet.codenet)
 
     def has_training_docs(self):
         return True
@@ -38,20 +37,20 @@ class CoNaLa(Task):
         return NotImplemented
 
     def doc_to_decontamination_query(self, doc):
-        return doc["question"]
+        return doc["problem"]
 
     def doc_to_text(self, doc):
-        return f'QUESTION:\n{doc["question"]}\nANSWER:\n'
+        return f'QUESTION:\n{doc["problem"]}\nANSWER:\n'
 
     def doc_to_target(self, doc):
-        return doc["answer"]
+        return doc["solution"]
 
     def construct_requests(self, doc, ctx):
         return rf.greedy_until(ctx, ["<|endoftext|>"])
 
     def process_results(self, doc, results):
         return {
-            "bleu": (doc["answer"], results[0]),
+            "bleu": (doc["solution"], results[0]),
         }
 
     def aggregation(self):
@@ -63,3 +62,8 @@ class CoNaLa(Task):
         return {
             "bleu": True,
         }
+
+
+class CodeNetPython(CodeNet):
+    VERSION = 1
+    DATASET_NAME = "python"

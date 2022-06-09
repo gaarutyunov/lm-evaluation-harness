@@ -61,6 +61,7 @@ _NAMES = [
 
 class StaQC(datasets.GeneratorBasedBuilder):
     """StaQC: a systematically mined dataset containing around 148K Python and 120K SQL domain question-code pairs"""
+
     refactor = RefactoringTool(fixer_names=get_fixers_from_package("lib2to3.fixes"))
 
     VERSION = datasets.Version("0.0.1")
@@ -85,11 +86,11 @@ class StaQC(datasets.GeneratorBasedBuilder):
     ):
         for question_id, code_idx in question_code_pairs.items():
             code = multi_code_snippet[(question_id, code_idx)]
-            code = code.strip("\n").strip(' ')
+            code = code.strip("\n").strip(" ")
             question = multi_code_questions[question_id]
 
             try:
-                code = self.refactor.refactor_string(code + '\n', str(question_id))
+                code = self.refactor.refactor_string(code + "\n", str(question_id))
             except Exception as e:
                 continue
 
@@ -105,7 +106,7 @@ class StaQC(datasets.GeneratorBasedBuilder):
             code = code.strip("\n").strip()
 
             try:
-                code = self.refactor.refactor_string(code + '\n', str(question_id))
+                code = self.refactor.refactor_string(code + "\n", str(question_id))
             except Exception as e:
                 continue
 
@@ -141,14 +142,21 @@ class StaQC(datasets.GeneratorBasedBuilder):
             s = StringIO(content)
 
             return dict(
-                np.genfromtxt(s, names=["question_id", "code_snippet_idx"], dtype="i4,i4",  delimiter=", ")
+                np.genfromtxt(
+                    s,
+                    names=["question_id", "code_snippet_idx"],
+                    dtype="i4,i4",
+                    delimiter=", ",
+                )
             )
 
         def file_to_df(key: str) -> pd.DataFrame:
             filename = data_dir[key]
 
             return (
-                pd.read_pickle(filename) if key != "question_code_pairs" else read_txt(filename)
+                pd.read_pickle(filename)
+                if key != "question_code_pairs"
+                else read_txt(filename)
             )
 
         kwargs = dict(zip(urls.keys(), map(file_to_df, urls.keys())))

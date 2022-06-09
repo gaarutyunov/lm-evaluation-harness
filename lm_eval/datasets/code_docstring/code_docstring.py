@@ -97,9 +97,9 @@ class CodeDocstring(datasets.GeneratorBasedBuilder):
 
     def _generate_examples(self, bodies, docstrings, declarations):
         with (
-            open(bodies, encoding='latin-1') as bodies_f,
-            open(docstrings, encoding='latin-1') as docstrings_f,
-            open(declarations, encoding='latin-1') as declarations_f,
+            open(bodies, encoding="latin-1") as bodies_f,
+            open(docstrings, encoding="latin-1") as docstrings_f,
+            open(declarations, encoding="latin-1") as declarations_f,
         ):
             i = 0
             for body, docstring, declaration in zip(
@@ -130,16 +130,11 @@ class CodeDocstring(datasets.GeneratorBasedBuilder):
                     )
                     body = body.strip(" ").strip("\n")
                     body = declaration + body + "\n"
-                    body = self.refactor.refactor_string(
-                        body, declaration
+                    body = self.refactor.refactor_string(body, declaration)
+                    func = (
+                        str(body).lstrip(declaration).replace("\n\t", "\n").lstrip("\t")
                     )
-                    func = str(body)\
-                        .lstrip(declaration)\
-                        .replace("\n\t", "\n")\
-                        .lstrip("\t")
-                    reindented = reindent_code(
-                        func
-                    )
+                    reindented = reindent_code(func)
                     declaration = declaration.rstrip("\n")
                 except Exception as e:
                     continue

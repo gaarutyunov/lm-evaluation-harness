@@ -51,6 +51,9 @@ from . import blimp
 from . import asdiv
 from . import gsm8k
 from . import storycloze
+from . import staqc
+from . import conala
+from . import code_docstring
 
 ########################################
 # Translation tasks
@@ -288,6 +291,11 @@ TASK_REGISTRY = {
     # "storycloze_2016": storycloze.StoryCloze2016,
     # "storycloze_2018": storycloze.StoryCloze2018,
     # "sat": sat.SATAnalogies,
+
+    "code_docstring_functions": code_docstring.CodeDocstringFunctions,
+    "code_docstring_methods": code_docstring.CodeDocstringMethods,
+    "sta_qc_python": staqc.StaQCPython,
+    "conala": conala.CoNaLa,
 }
 
 
