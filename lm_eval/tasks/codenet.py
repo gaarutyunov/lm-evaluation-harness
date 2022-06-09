@@ -64,6 +64,11 @@ class CodeNet(Task):
         }
 
 
-class CodeNetPython(CodeNet):
+class AIZUPython(CodeNet):
     VERSION = 1
-    DATASET_NAME = "python"
+    DATASET_NAME = "python_AIZU"
+
+
+class AtCoderPython(CodeNet):
+    VERSION = 1
+    DATASET_NAME = "python_AtCoder"

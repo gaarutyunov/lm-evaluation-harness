@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 import pdb
 from dataclasses import dataclass
@@ -44,7 +45,7 @@ _URLS = {
         "cpp2": "https://dax-cdn.cdn.appdomain.cloud/dax-project-codenet/1.0.0/Project_CodeNet_C++1400.tar.gz",
     },
     "metadata": "https://dax-cdn.cdn.appdomain.cloud/dax-project-codenet/1.0.0/Project_CodeNet_metadata.tar.gz",
-    "problem_list": ""
+    "problem_list": "https://drive.google.com/uc?export=download&id=1G60A5I5NYRWxcVwfvMDT8GTgqGr_iStb"
 }
 
 _NAMES = [
@@ -56,10 +57,21 @@ _NAMES = [
 
 _NAME_TO_EXT = {"python": "py", "java": "java", "cpp1": "cc", "cpp2": "cc"}
 
+_DATASETS = ["AIZU", "AtCoder"]
+
+_NAME_TO_FOLDER = {"python": "Project_CodeNet_Python800"}
+
 
 @dataclass
 class CodeNetBuilderConfig(datasets.BuilderConfig):
     extension: str = "py"
+    language: str = "python"
+    original_dataset: str = "AIZU"
+    problems_folder: str = "Project_CodeNet_Python800"
+
+
+def _get_all_configs(v):
+    return [(name, version, dataset) for dataset in _DATASETS for name, version in zip(_NAMES, [v] * len(_NAMES))]
 
 
 class CodeNet(datasets.GeneratorBasedBuilder):
@@ -71,26 +83,32 @@ class CodeNet(datasets.GeneratorBasedBuilder):
 
     BUILDER_CONFIGS = [
         CodeNetBuilderConfig(
-            name=name,
+            name=f'{language}_{dataset}',
+            language=language,
             version=version,
             description="Project codenet: a large-scale AI for code dataset for learning a diversity of coding tasks",
-            extension=_NAME_TO_EXT[name],
+            extension=_NAME_TO_EXT[language],
+            original_dataset=dataset,
+            problems_folder=_NAME_TO_FOLDER[language]
         )
-        for name, version in zip(_NAMES, [VERSION] * len(_NAMES))
+        for language, version, dataset in _get_all_configs(VERSION)
     ]
 
     def _generate_examples(self, benchmark: str, metadata: str, problem_list: str):
         problems_df = pd.read_csv(problem_list, usecols=["id", "dataset"], index_col=0)
-        mask = problems_df["dataset"] == "AIZU"
+        mask = problems_df["dataset"] == self.config.original_dataset
+        metadata = pathlib.Path(metadata).joinpath('Project_CodeNet')
+        benchmark = pathlib.Path(benchmark).joinpath(self.config.problems_folder)
 
         for problem_id, _ in problems_df[mask].iterrows():
             problem_meta = pathlib.Path(metadata).joinpath("metadata", f'{problem_id}.csv')
 
-            with open(
-                pathlib.Path(metadata).joinpath(
-                    "problem_descriptions", f"{problem_id}.html"
-                )
-            ) as f:
+            problem_descr = pathlib.Path(metadata).joinpath("problem_descriptions", f"{problem_id}.html")
+
+            if not problem_descr.exists():
+                continue
+
+            with open(problem_descr) as f:
                 problem_html = f.read()
 
             soup = BeautifulSoup(problem_html, features="html.parser")
@@ -99,7 +117,7 @@ class CodeNet(datasets.GeneratorBasedBuilder):
 
             meta_df = pd.read_csv(
                 str(problem_meta),
-                usecols=["submission_id", "filename_ext", "status"],
+                usecols=["submission_id", "filename_ext", "status", "original_language"],
                 index_col=0,
             )
             mask = (meta_df["filename_ext"] == self.config.extension) & (
@@ -109,17 +127,21 @@ class CodeNet(datasets.GeneratorBasedBuilder):
             for submission_id, row in meta_df[mask].iterrows():
                 submission_file = f'{submission_id}.{row["filename_ext"]}'
 
-                with open(
-                    pathlib.Path(benchmark).joinpath(problem_id, submission_file)
-                ) as f:
+                submission = pathlib.Path(benchmark).joinpath(problem_id, submission_file)
+
+                if not submission.exists():
+                    continue
+
+                with open(submission) as f:
                     solution = f.read()
-                    try:
-                        solution = self.refactor.refactor_string(
-                            solution, submission_id
-                        )
-                    except Exception as e:
-                        pdb.set_trace()
-                        continue
+
+                    if row["original_language"] != "Python3" and "Python (3" not in row["original_language"] and "PyPy3" not in row["original_language"]:
+                        try:
+                            solution = self.refactor.refactor_string(
+                                solution + '\n', submission_id
+                            )
+                        except Exception as e:
+                            continue
 
                     solution = reindent_code(str(solution))
 
@@ -145,8 +167,9 @@ class CodeNet(datasets.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: DownloadManager):
         urls = {
-            "benchmark": _URLS["benchmarks"][self.config.name],
+            "benchmark": _URLS["benchmarks"][self.config.language],
             "metadata": _URLS["metadata"],
+            "problem_list": _URLS["problem_list"],
         }
         data_dir = dl_manager.download_and_extract(urls)
 
