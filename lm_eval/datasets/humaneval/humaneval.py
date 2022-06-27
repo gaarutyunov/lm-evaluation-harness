@@ -45,6 +45,7 @@ class HumanEval(datasets.GeneratorBasedBuilder):
         with jsonlines.open(path) as reader:
             for line in reader:
                 yield line["task_id"].replace("/", "-"), {
+                    "task_id": line["task_id"],
                     "prompt": line["prompt"],
                     "canonical_solution": line["canonical_solution"],
                     "test": line["test"],
@@ -54,6 +55,7 @@ class HumanEval(datasets.GeneratorBasedBuilder):
     def _info(self) -> DatasetInfo:
         features = datasets.Features(
             {
+                "task_id": datasets.Value("string"),
                 "prompt": datasets.Value("string"),
                 "canonical_solution": datasets.Value("string"),
                 "test": datasets.Value("string"),

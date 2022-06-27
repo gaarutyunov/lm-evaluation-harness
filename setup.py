@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="lm_eval",
-    version="0.3.8",
+    version="0.3.9",
     author="Leo Gao",
     author_email="lg@eleuther.ai",
     description="A framework for evaluating autoregressive language models",
