@@ -1,3 +1,4 @@
+import inspect
 from asyncio import as_completed
 from collections import defaultdict, Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -8,6 +9,7 @@ from human_eval.evaluation import estimate_pass_at_k
 from human_eval.execution import check_correctness
 from lm_eval.metrics import mean
 from tqdm.auto import tqdm
+import lm_eval.datasets.humaneval.humaneval
 
 from lm_eval.base import Task, rf
 
@@ -66,6 +68,9 @@ def evaluate_functional_correctness(
 
 
 class HumanEval(Task):
+    VERSION = 1
+    DATASET_PATH = inspect.getfile(lm_eval.datasets.humaneval.humaneval)
+
     def has_training_docs(self):
         return False
 
