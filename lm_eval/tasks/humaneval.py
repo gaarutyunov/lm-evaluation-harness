@@ -77,6 +77,15 @@ class HumanEval(Task):
     def has_validation_docs(self):
         return False
 
+    def test_docs(self):
+        return self.dataset["test"]
+
+    def training_docs(self):
+        return NotImplemented
+
+    def validation_docs(self):
+        return NotImplemented
+
     def has_test_docs(self):
         return True
 
