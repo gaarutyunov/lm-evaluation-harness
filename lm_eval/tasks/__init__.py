@@ -54,6 +54,7 @@ from . import storycloze
 from . import staqc
 from . import conala
 from . import code_docstring
+from . import humaneval
 
 ########################################
 # Translation tasks
@@ -296,6 +297,7 @@ TASK_REGISTRY = {
     "code_docstring_methods": code_docstring.CodeDocstringMethods,
     "sta_qc_python": staqc.StaQCPython,
     "conala": conala.CoNaLa,
+    "humaneval": humaneval.HumanEval,
 }
 
 

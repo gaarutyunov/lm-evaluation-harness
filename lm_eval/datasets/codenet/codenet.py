@@ -114,7 +114,7 @@ class CodeNet(datasets.GeneratorBasedBuilder):
             soup = BeautifulSoup(problem_html, features="html.parser")
 
             problem = soup.get_text()
-
+            pdb.set_trace()
             meta_df = pd.read_csv(
                 str(problem_meta),
                 usecols=["submission_id", "filename_ext", "status", "original_language"],
